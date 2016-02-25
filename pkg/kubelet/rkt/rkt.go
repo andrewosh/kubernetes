@@ -1305,8 +1305,8 @@ func (r *runtime) getImageByName(imageName string) (*kubecontainer.Image, error)
 	}
 
 	for _, img := range images {
-		for _, t := range img.Tags {
-			if t == imageName {
+		for _, n := range img.Names {
+			if n == imageName {
 				return &img, nil
 			}
 		}
@@ -1355,7 +1355,7 @@ func parseImageInfo(input string) (*kubecontainer.Image, error) {
 	}
 	return &kubecontainer.Image{
 		ID:   idName[0],
-		Tags: []string{idName[1]},
+		Names: []string{idName[1]},
 	}, nil
 }
 

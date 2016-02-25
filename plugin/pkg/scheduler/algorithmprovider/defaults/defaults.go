@@ -78,6 +78,8 @@ func defaultPredicates() sets.String {
 
 func defaultPriorities() sets.String {
 	return sets.NewString(
+        // Prioritizes nodes by image locality --> ideal for Binder
+        factory.RegisterPriorityFunction("ImageLocalityPriority", priorities.ImageLocalityPriority, 2),
 		// Prioritize nodes by least requested utilization.
 		factory.RegisterPriorityFunction("LeastRequestedPriority", priorities.LeastRequestedPriority, 1),
 		// Prioritizes nodes to help achieve balanced resource usage

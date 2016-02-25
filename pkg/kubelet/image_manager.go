@@ -28,6 +28,8 @@ import (
 	"k8s.io/kubernetes/pkg/client/record"
 	"k8s.io/kubernetes/pkg/kubelet/cadvisor"
 	"k8s.io/kubernetes/pkg/kubelet/dockertools"
+    "k8s.io/kubernetes/pkg/kubelet/container"
+    kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util"
 	"k8s.io/kubernetes/pkg/util/sets"
 )
@@ -42,6 +44,9 @@ type imageManager interface {
 
 	// Start async garbage collection of images.
 	Start() error
+
+    // Return the images on the node
+    GetImageList() ([]kubecontainer.Image, error)
 
 	// TODO(vmarmol): Have this subsume pulls as well.
 }
@@ -59,6 +64,9 @@ type ImageGCPolicy struct {
 }
 
 type realImageManager struct {
+    // Container runtime
+    runtime container.Runtime
+
 	// Connection to the Docker daemon.
 	dockerClient dockertools.DockerInterface
 
@@ -127,6 +135,14 @@ func (im *realImageManager) Start() error {
 	}, 5*time.Minute, util.NeverStop)
 
 	return nil
+}
+
+func (im *realImageManager) GetImageList() ([]kubecontainer.Image, error) {
+    images, err := im.runtime.ListImages()
+    if err != nil {
+        return nil, err
+    }
+    return images, nil
 }
 
 func (im *realImageManager) detectImages(detected time.Time) error {
@@ -288,12 +304,12 @@ func (ev byLastUsedAndDetected) Less(i, j int) bool {
 }
 
 func isImageUsed(image *docker.APIImages, imagesInUse sets.String) bool {
-	// Check the image ID and all the RepoTags.
+	// Check the image ID and all the Names.
 	if _, ok := imagesInUse[image.ID]; ok {
 		return true
 	}
-	for _, tag := range image.RepoTags {
-		if _, ok := imagesInUse[tag]; ok {
+	for _, name := range image.RepoTags {
+		if _, ok := imagesInUse[name]; ok {
 			return true
 		}
 	}

@@ -188,7 +188,7 @@ type Image struct {
 	// ID of the image.
 	ID string
 	// Other names by which this image is known.
-	Tags []string
+	Names []string
 	// The size of the image in bytes.
 	Size int64
 }

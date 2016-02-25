@@ -2423,6 +2423,8 @@ func (kl *Kubelet) setNodeStatus(node *api.Node) error {
 				"Node %s has been rebooted, boot id: %s", kl.nodeName, info.BootID)
 		}
 		node.Status.NodeInfo.BootID = info.BootID
+        // set Status.Images
+        kl.setNodeStatusImages(node)
 	}
 
 	verinfo, err := kl.cadvisor.VersionInfo()
@@ -2812,6 +2814,23 @@ func (kl *Kubelet) generatePodStatus(pod *api.Pod) (api.PodStatus, error) {
 	}
 
 	return *podStatus, nil
+}
+
+// Sets images list for this node
+func (kl *Kubelet) setNodeStatusImages(node *api.Node) {
+    var imagesOnNode []api.ContainerImage
+    containerImages, err := kl.imageManager.GetImageList()
+    if err != nil {
+        glog.Errorf("Error getting image list: %v", err)
+    } else {
+        for _, image := range containerImages {
+            imagesOnNode = append(imagesOnNode, api.ContainerImage{
+                Names: image.Names,
+                SizeBytes: image.Size,
+            })
+        }
+    }
+    node.Status.Images = imagesOnNode
 }
 
 // Returns logs of current machine.
