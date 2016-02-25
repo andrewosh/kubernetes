@@ -99,7 +99,7 @@ type imageRecord struct {
 	size int64
 }
 
-func newImageManager(dockerClient dockertools.DockerInterface, cadvisorInterface cadvisor.Interface, recorder record.EventRecorder, nodeRef *api.ObjectReference, policy ImageGCPolicy) (imageManager, error) {
+func newImageManager(runtime container.Runtime, dockerClient dockertools.DockerInterface, cadvisorInterface cadvisor.Interface, recorder record.EventRecorder, nodeRef *api.ObjectReference, policy ImageGCPolicy) (imageManager, error) {
 	// Validate policy.
 	if policy.HighThresholdPercent < 0 || policy.HighThresholdPercent > 100 {
 		return nil, fmt.Errorf("invalid HighThresholdPercent %d, must be in range [0-100]", policy.HighThresholdPercent)
@@ -108,6 +108,7 @@ func newImageManager(dockerClient dockertools.DockerInterface, cadvisorInterface
 		return nil, fmt.Errorf("invalid LowThresholdPercent %d, must be in range [0-100]", policy.LowThresholdPercent)
 	}
 	im := &realImageManager{
+        runtime:      runtime,
 		dockerClient: dockerClient,
 		policy:       policy,
 		imageRecords: make(map[string]*imageRecord),
